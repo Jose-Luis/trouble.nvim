@@ -16,6 +16,7 @@ endfunction
 
 command! -nargs=* -complete=custom,s:complete Trouble lua require'trouble'.open(<f-args>)
 command! -nargs=* -complete=custom,s:complete TroubleToggle lua require'trouble'.toggle(<f-args>)
+command! -nargs=* -complete=custom,s:complete TroubleToggleWorkspaceErrors lua require'trouble'.toggle({mode = "workspace_diagnostics", severity = vim.diagnostic.severity.ERROR})
 command! TroubleClose lua require'trouble'.close()
 command! TroubleRefresh lua require'trouble'.refresh()
 

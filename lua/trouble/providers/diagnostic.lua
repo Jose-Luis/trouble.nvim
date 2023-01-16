@@ -6,55 +6,35 @@ local M = {}
 ---@param options TroubleOptions
 ---@return Item[]
 function M.diagnostics(_, buf, cb, options)
-  if options.mode == "workspace_diagnostics" then
-    buf = nil
-  end
-
-  local items = {}
-
-  if vim.diagnostic then
-    local diags = vim.diagnostic.get(buf)
-    for _, item in ipairs(filter_by_severity(diags, options.severity)) do
-      table.insert(items, util.process_item(item))
+    -- print("Options:" .. vim.inspect(options))
+    if options.mode == "workspace_diagnostics" then
+        buf = nil
     end
-  else
-    ---@diagnostic disable-next-line: deprecated
-    local diags = buf and { [buf] = vim.lsp.diagnostic.get(buf) } or vim.lsp.diagnostic.get_all()
-    items = util.locations_to_items(filter_by_severity(diags, options.severity), 1)
-  end
 
-  cb(items)
-end
-
-function filter_by_severity(diags, severity)
-    if severity == nil then
-        return diags
-    else
-        local result = {}
-        for _, diag in ipairs(diags) do
-            if diag.severity >= severity then
-                result[#result + 1] = diag
-            end
-        end
-        return result
+    local items = {}
+    local diags = vim.diagnostic.get(buf, { severity = { min = options.cmd_options.severity } })
+    for _, item in ipairs(diags) do
+        table.insert(items, util.process_item(item))
     end
+
+    cb(items)
 end
 
 function M.get_signs()
-  local signs = {}
-  for _, v in pairs(util.severity) do
-    if v ~= "Other" then
-      -- pcall to catch entirely unbound or cleared out sign hl group
-      local status, sign = pcall(function()
-        return vim.trim(vim.fn.sign_getdefined(util.get_severity_label(v, "Sign"))[1].text)
-      end)
-      if not status then
-        sign = v:sub(1, 1)
-      end
-      signs[string.lower(v)] = sign
+    local signs = {}
+    for _, v in pairs(util.severity) do
+        if v ~= "Other" then
+            -- pcall to catch entirely unbound or cleared out sign hl group
+            local status, sign = pcall(function()
+                return vim.trim(vim.fn.sign_getdefined(util.get_severity_label(v, "Sign"))[1].text)
+            end)
+            if not status then
+                sign = v:sub(1, 1)
+            end
+            signs[string.lower(v)] = sign
+        end
     end
-  end
-  return signs
+    return signs
 end
 
 return M
