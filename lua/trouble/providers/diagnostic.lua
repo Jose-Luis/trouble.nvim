@@ -14,16 +14,30 @@ function M.diagnostics(_, buf, cb, options)
 
   if vim.diagnostic then
     local diags = vim.diagnostic.get(buf)
-    for _, item in ipairs(diags) do
+    for _, item in ipairs(filter_by_severity(diags, options.severity)) do
       table.insert(items, util.process_item(item))
     end
   else
     ---@diagnostic disable-next-line: deprecated
     local diags = buf and { [buf] = vim.lsp.diagnostic.get(buf) } or vim.lsp.diagnostic.get_all()
-    items = util.locations_to_items(diags, 1)
+    items = util.locations_to_items(filter_by_severity(diags, options.severity), 1)
   end
 
   cb(items)
+end
+
+function filter_by_severity(diags, severity)
+    if severity == nil then
+        return diags
+    else
+        local result = {}
+        for _, diag in ipairs(diags) do
+            if diag.severity >= severity then
+                result[#result + 1] = diag
+            end
+        end
+        return result
+    end
 end
 
 function M.get_signs()
